@@ -1,6 +1,6 @@
 # iCloud-Bypass-Namibia
 A repository for iOS BootROM exploits as used by Checkm8 and other iOS Bypass service providers.  
-Yo, bro this might be a long read, I didnt write this myself; It was written by the Checkm8 team so all credits go to them. This read will equip you with how the process works. Have fun!!
+Yo, bro, this might be a long read, I didn't write this myself; It was written by the Checkm8 team so all credits go to them. This read will equip you with how the process works. Have fun!!
 
 Basics:
 
