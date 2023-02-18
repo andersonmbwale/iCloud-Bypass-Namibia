@@ -1,7 +1,4 @@
 # iCloud-Bypass-Namibia
-![Orange Black Hummingbird Tech, Digital Bird Logo Template](https://user-images.githubusercontent.com/106577954/219881527-8db504ce-9760-48cc-b3fb-8fb27270a809.png)
-
-
 A repository for iOS BootROM exploits as used by Checkm8 and other iOS Bypass service providers.  
 Yo, bro, this might be a long read, I didn't write this myself; It was written by the Checkm8 team so all credits go to them. This read will equip you with how the process works. Have fun!!
 
