@@ -5,9 +5,6 @@ Basics:
 
 First things first. Let’s take a quick-look at iDevice booting process itself and a role of the BootROM (or Secure ROM) in this process.
 
-Below, you’ll find the flow chart presenting the Apple Device booting process.
-
-
 BootROM is the first thing executed when a device is turned on. Main tasks it performs are:
 
 Platform initialization (required platform registers are installed, CPU is initialized, etc.)
