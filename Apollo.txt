@@ -1,0 +1,34 @@
+This bug was also called moonshine in the beginning
+Basically the following bug is present in all bootroms I have looked at:
+1. When usb is started to get an image over dfu, dfu registers an interface to handle all the commands and allocates a buffer for input and output
+2. if you send data to dfu the setup packet is handled by the main code which then calls out to the interface code
+3. the interface code verifies that wLength is shorter than the input output buffer length and if that's the case it updates a pointer passed as an argument with a pointer to the input output buffer
+4. it then returns wLength which is the length it wants to recieve into the buffer
+5. the usb main code then updates a global var with the length and gets ready to recieve the data packages
+6. if a data package is recieved it gets written to the input output buffer via the pointer which was passed as an argument and another global variable is used to keep track of how many bytes were recieved already
+7. if all the data was recieved the dfu specific code is called again and that then goes on to copy the contents of the input output buffer to the memory location from where the image is later booted
+8. after that the usb code resets all variables and goes on to handel new packages
+9. if dfu exits the input output buffer is freed and if parsing of the image fails bootrom reenters dfu
+
+Exiting dfu can either be done by sending a dfu abort package or by triggering parsing with a usb reset
+
+The problem:
+At step 5 the global variables are updated and the bootrom gets ready to recieve the data, but with a cheap controller you can violate the usb spec and don't send any (arduino host controller or sth like that).
+Then you can trigger a usb reset to trigger image parsing. If that parsing fails bootrom will enter dfu once again, BUT step 8 wasn't executed so the global variables still contain all the values.
+However step 9 was executed so the input output buffer is freed while the pointer which was passed as an argument in step 3 still points to it.
+Because of that you can easily trigger a write to an already freed buffer by sending data to the device.
+
+Exploitation on A8:
+1. Send 0x40 of random data to dfu, this has to be sent otherwise you can't exit dfu using usb reset ctrlReq(bmRequestType = 0x21,bRequest = 1,wLength = 0x40)
+2. get dfu in the state where it's waiting for a usb reset by sending ctrlReq(0x21,1,0) ctrlReq(0xa1,3,1) ctrlReq(0xa1,3,1) ctrlReq(0xa1,3,1) (see ipwndfu dfu.py)
+3. only sent a setup packet with bmRequestType 0x21 and bRequest 1 and a wLength of your payload size (this one will update the global variables)
+4. send a status packet to mark the end of the controll transfer (we skipped the data phase even tho we set wLength to a value)
+5. trigger bus reset
+6. wait for the device to reenter dfu (now the input output buffer will be freed and the usb task will be allocated under the freed buffer)
+7. send a set configuration request ctrlReq(bmREQ_SET,USB_REQUEST_SET_CONFIGURATION,wLength=Payloadsize) but send the payload with it as data phase (set configuration handler in bootrom ignores wLength)
+
+The payload will overwrite the usb task struct and the next allocation after it will be the usb stack. By targeting the linked list in the usb task struct you can insert a fake task.
+And you can use the usb task stack as scratch space as it seems like it will never end up writing to it that high.
+That one will be spawned when dfu exits and the usb task gets stopped. So you can send a dfu abort packet after step 7 and with that get code exec with all higher registers controlled because your fake task gets added to the list and runs at some point later on.
+
+~ 31.05.19 lailo
